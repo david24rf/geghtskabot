@@ -1,110 +1,136 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Geghtskabot | TON Clicker</title>
+    <title>Geghtska Clicker</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         :root { --gold: #f39c12; --bg: #0b0b0b; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; touch-action: none; overflow: hidden; user-select: none; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; user-select: none; touch-action: manipulation; }
         
-        #ton-connect { margin-top: 20px; }
+        .header { width: 90%; display: flex; justify-content: space-between; margin-top: 20px; font-weight: bold; color: var(--gold); }
+        .balance { font-size: 48px; margin: 20px 0; font-weight: 900; color: var(--gold); }
         
-        /* Рівні */
-        .level-wrap { width: 80%; margin-top: 20px; }
-        .level-info { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; color: #aaa; }
-        .progress-bg { background: #222; height: 10px; border-radius: 5px; border: 1px solid #333; overflow: hidden; }
-        .progress-fill { background: linear-gradient(90deg, #f1c40f, #e67e22); height: 100%; width: 0%; transition: width 0.3s; }
-
-        .balance-label { font-size: 50px; font-weight: 900; margin: 25px 0; color: var(--gold); text-shadow: 0 0 15px rgba(243, 156, 18, 0.3); }
-        
-        .main-coin { 
+        .coin { 
             width: 220px; height: 220px; background: radial-gradient(circle, #f1c40f, #d35400); 
             border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 100px; cursor: pointer; border: 8px solid #2c2c2e;
-            transition: transform 0.05s; box-shadow: 0 0 30px rgba(211, 84, 0, 0.5);
+            font-size: 100px; cursor: pointer; border: 8px solid #2c2c2e; transition: transform 0.05s;
         }
-        .main-coin:active { transform: scale(0.92); }
+        .coin:active { transform: scale(0.95); }
 
-        .ad-button { 
-            margin-top: 30px; background: rgba(243, 156, 18, 0.1); border: 2px solid var(--gold); 
-            color: var(--gold); padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer;
-        }
+        .energy-box { width: 80%; margin-top: 30px; }
+        .energy-bar { background: #222; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
+        .energy-fill { background: #3498db; height: 100%; width: 100%; transition: width 0.2s; }
+        .energy-text { text-align: left; font-size: 14px; margin-bottom: 5px; }
 
-        .footer { margin-top: auto; padding-bottom: 20px; font-size: 11px; color: #444; }
+        .shop { display: flex; gap: 10px; margin-top: 20px; }
+        .upgrade-btn { background: #1c1c1e; border: 1px solid var(--gold); color: #fff; padding: 10px; border-radius: 10px; font-size: 12px; cursor: pointer; }
+        
+        .ad-btn { margin-top: 20px; background: none; border: 1px solid #555; color: #555; padding: 8px 20px; border-radius: 20px; font-size: 12px; }
     </style>
 </head>
 <body>
 
-    <div id="ton-connect"></div>
-
-    <div class="level-wrap">
-        <div class="level-info">
-            <span id="lvl-name">Bronze</span>
-            <span id="lvl-perc">0%</span>
-        </div>
-        <div class="progress-bg"><div class="progress-fill" id="lvl-fill"></div></div>
+    <div class="header">
+        <span id="lvl-name">Bronze</span>
+        <span id="multitap-info">Tap: x1</span>
     </div>
 
-    <div class="balance-label" id="bal">0</div>
+    <div class="balance" id="bal">0</div>
     
-    <div class="main-coin" id="coin">🐹</div>
+    <div class="coin" id="coin">🐹</div>
 
-    <button class="ad-button" id="ad-btn">📺 ВІДНОВИТИ ЕНЕРГІЮ</button>
+    <div class="energy-box">
+        <div class="energy-text">⚡ <span id="en-cur">500</span> / <span id="en-max">500</span></div>
+        <div class="energy-bar"><div class="energy-fill" id="en-fill"></div></div>
+    </div>
 
-    <div class="footer">Geghtskabot v2.0 | TON Ecosystem</div>
+    <div class="shop">
+        <button class="upgrade-btn" onclick="buyMultitap()">➕ Урон<br><span id="cost-mt">100</span> 🪙</button>
+        <button class="upgrade-btn" onclick="buyEnergy()">🔋 Энергия<br><span id="cost-en">150</span> 🪙</button>
+    </div>
+
+    <button class="ad-btn" id="ad-btn">📺 Реклама (Блок 20870)</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // TON Connect
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://raw.githubusercontent.com/ton-connect/demo-dapp/main/public/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect'
-        });
-
         let coins = parseInt(localStorage.getItem('coins')) || 0;
-        const levels = [
-            { n: "Bronze", m: 1000 }, { n: "Silver", m: 10000 }, 
-            { n: "Gold", m: 100000 }, { n: "Legend", m: 1000000 }
-        ];
+        let multitap = parseInt(localStorage.getItem('multitap')) || 1;
+        let maxEnergy = parseInt(localStorage.getItem('maxEnergy')) || 500;
+        let energy = parseInt(localStorage.getItem('energy')) || maxEnergy;
 
         function updateUI() {
             document.getElementById('bal').innerText = coins.toLocaleString();
+            document.getElementById('en-cur').innerText = energy;
+            document.getElementById('en-max').innerText = maxEnergy;
+            document.getElementById('en-fill').style.width = (energy / maxEnergy * 100) + "%";
+            document.getElementById('multitap-info').innerText = "Tap: x" + multitap;
+            document.getElementById('cost-mt').innerText = multitap * 150;
+            document.getElementById('cost-en').innerText = (maxEnergy / 100) * 100;
             
-            let l = levels.find(x => coins < x.m) || levels[levels.length-1];
-            let prev = levels[levels.indexOf(l)-1]?.m || 0;
-            let prg = ((coins - prev) / (l.m - prev)) * 100;
-            
-            document.getElementById('lvl-name').innerText = l.n;
-            document.getElementById('lvl-fill').style.width = Math.min(prg, 100) + "%";
-            document.getElementById('lvl-perc').innerText = Math.floor(Math.min(prg, 100)) + "%";
-
             localStorage.setItem('coins', coins);
+            localStorage.setItem('multitap', multitap);
+            localStorage.setItem('maxEnergy', maxEnergy);
+            localStorage.setItem('energy', energy);
         }
 
+        // Клик по хомяку
         function doTap(e) {
-            coins++;
-            tg.HapticFeedback.impactOccurred('medium');
-            updateUI();}
+            if (energy >= multitap) {coins += multitap;
+                energy -= multitap;
+                tg.HapticFeedback.impactOccurred('light');
+                updateUI();
+            } else {
+                tg.showAlert("Недостаточно энергии!");
+            }
+        }
 
-        const coinEl = document.getElementById('coin');
-        coinEl.addEventListener('touchstart', (e) => { e.preventDefault(); doTap(e); });
-        coinEl.addEventListener('mousedown', doTap);
+        // Покупка мультитапа
+        window.buyMultitap = function() {
+            let cost = multitap * 150;
+            if (coins >= cost) {
+                coins -= cost;
+                multitap++;
+                updateUI();
+            }
+        }
 
-        // Реклама (НОВИЙ ID: 20870)
-        document.getElementById('ad-btn').addEventListener('click', () => {
+        // Покупка макс. энергии
+        window.buyEnergy = function() {
+            let cost = (maxEnergy / 100) * 100;
+            if (coins >= cost) {
+                coins -= cost;
+                maxEnergy += 100;
+                energy += 100;
+                updateUI();
+            }
+        }
+
+        // Восстановление энергии: +1 каждые 5 сек
+        setInterval(() => {
+            if (energy < maxEnergy) {
+                energy++;
+                updateUI();
+            }
+        }, 5000);
+
+        // Реклама (Adsgram блок 20870)
+        document.getElementById('ad-btn').onclick = () => {
             const AdController = window.Adsgram.init({ blockId: "20870" });
             AdController.show().then(() => {
-                tg.showAlert("Енергію відновлено! Продовжуй клікати.");
-            }).catch(() => {
-                tg.showAlert("Реклама завантажується. Спробуй через хвилину.");
-            });
-        });
+                energy = maxEnergy;
+                updateUI();
+                tg.showAlert("Энергия полностью восстановлена!");
+            }).catch(() => tg.showAlert("Реклама еще загружается..."));
+        };
+
+        const coinEl = document.getElementById('coin');
+        coinEl.addEventListener('touchstart', (e) => { e.preventDefault(); doTap(); });
+        coinEl.addEventListener('mousedown', doTap);
 
         updateUI();
     </script>
