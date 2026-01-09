@@ -1,78 +1,39 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Geghtskabot | TON Clicker</title>
-    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    
     <style>
-        :root { --gold: #f39c12; --bg: #0b0b0b; --card: #1c1c1e; }
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; touch-action: none; }
-        
-        /* Кнопка гаманця */
-        #ton-connect { margin-top: 20px; z-index: 100; }
-        .wallet-status { font-size: 11px; color: #888; margin-top: 8px; font-family: monospace; }
-
-        /* Прогрес рівнів */
-        .level-container { width: 85%; margin-top: 15px; }
-        .level-labels { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #aaa; }
-        .level-progress-bg { background: #222; height: 8px; border-radius: 10px; border: 1px solid #333; overflow: hidden; }
-        .level-progress-fill { background: linear-gradient(90deg, #f1c40f, #e67e22); height: 100%; width: 0%; transition: width 0.4s ease-out; }
-
-        /* Баланс */
-        .balance-label { font-size: 52px; font-weight: 900; margin: 20px 0; color: var(--gold); text-shadow: 0 0 20px rgba(243, 156, 18, 0.4); }
-        
-        /* Кнопка Хом'як */
-        .coin-wrapper { position: relative; perspective: 1000px; }
-        .main-coin { 
-            width: 240px; height: 240px; background: radial-gradient(circle, #f1c40f, #d35400); 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 120px; cursor: pointer; border: 10px solid #2c2c2e; user-select: none;
-            -webkit-tap-highlight-color: transparent; box-shadow: 0 0 50px rgba(211, 84, 0, 0.6);
-            transition: transform 0.05s;
-        }
-        .main-coin:active { transform: scale(0.94) rotateX(5deg); }
-
-        /* Енергія */
-        .energy-wrap { width: 80%; margin-top: 30px; text-align: center; }
-        .energy-text { font-weight: bold; font-size: 20px; margin-bottom: 10px; display: block; }
-        
-        /* Рекламна кнопка */
-        .ad-button { 
-            background: linear-gradient(180deg, rgba(243, 156, 18, 0.2), rgba(243, 156, 18, 0.05)); 
-            border: 2px solid var(--gold); color: var(--gold); padding: 14px 35px; 
-            border-radius: 40px; font-weight: bold; cursor: pointer; font-size: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        .ad-button:active { transform: translateY(2px); background: var(--gold); color: #000; }
-
-        /* Анімація +1 */
-        .tap-plus { position: absolute; color: #fff; font-size: 40px; font-weight: bold; animation: floatUp 0.7s ease-out forwards; pointer-events: none; z-index: 1000; }
-        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-140px); } }
-
-        /* Опис для модерації Adsgram */
-        .info-footer { margin: 50px 0; padding: 20px; background: #161618; width: 85%; border-radius: 16px; font-size: 13px; color: #777; border: 1px solid #2c2c2e; line-height: 1.5; }
+        body { background: #000; color: #fff; text-align: center; font-family: sans-serif; user-select: none; touch-action: manipulation; }
+        #coin { width: 200px; height: 200px; background: orange; border-radius: 50%; display: inline-block; margin-top: 50px; font-size: 80px; line-height: 200px; cursor: pointer; border: 5px solid #fff; }
+        #bal { font-size: 40px; margin: 20px; color: gold; }
     </style>
 </head>
 <body>
+    <div id="bal">0</div>
+    <div id="coin">🐹</div>
+    <p>Клікай на хом'яка!</p>
 
-    <div id="ton-connect"></div>
-    <div class="wallet-status" id="wallet-addr">Connect wallet for Airdrop</div>
-    
-    <div class="level-container">
-        <div class="level-labels">
-            <span id="lvl-name">Bronze</span>
-            <span id="lvl-perc">0%</span>
-        </div>
-        <div class="level-progress-bg"><div class="level-progress-fill" id="lvl-fill"></div></div>
-    </div>
+    <script>
+        let count = parseInt(localStorage.getItem('coins')) || 0;
+        const balEl = document.getElementById('bal');
+        const coinEl = document.getElementById('coin');
+        
+        balEl.innerText = count;
 
-    <div class="balance-label" id="bal">0</div>
-    
-    <div class="coin-wrapper">
-        <div class="main-coin" id="coin">🐹</div>
-    </div>
+        function doTap() {
+            count++;
+            balEl.innerText = count;
+            localStorage.setItem('coins', count);
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
+        }
+
+        coinEl.addEventListener('touchstart', (e) => { e.preventDefault(); doTap(); });
+        coinEl.addEventListener('mousedown', doTap);
+    </script>
+</body>
+</html>
