@@ -2,183 +2,141 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Geghtska Elite Cloud</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Geghtska Elite Fix</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
     <style>
         body {
-            background: radial-gradient(circle at top, #1a1a1a, #000);
-            color: white; font-family: 'Segoe UI', Roboto, sans-serif;
-            margin: 0; display: flex; flex-direction: column; align-items: center;
-            height: 100vh; overflow: hidden; user-select: none; touch-action: manipulation;
+            background: #000; color: white; font-family: sans-serif;
+            margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center;
+            height: 100vh; width: 100vw; overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent;
         }
-        .header { width: 90%; display: flex; justify-content: space-between; padding: 20px; font-weight: bold; color: #f39c12; }
-        .balance-container { text-align: center; margin-bottom: 20px; }
-        .balance { font-size: 56px; font-weight: 900; background: linear-gradient(#f1c40f, #e67e22); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header { width: 90%; display: flex; justify-content: space-between; padding: 20px 0; color: #f39c12; font-weight: bold; }
+        .balance { font-size: 50px; font-weight: 900; margin: 20px 0; color: #f1c40f; }
         
-        .coin-wrapper { position: relative; z-index: 5; }
+        /* Зона клика увеличена */
+        .coin-area {
+            position: relative; width: 280px; height: 280px; 
+            display: flex; align-items: center; justify-content: center;
+        }
         .coin {
             width: 240px; height: 240px; border-radius: 50%;
             background: radial-gradient(circle, #f1c40f, #d35400); 
-            border: 10px solid #2c2c2e;
-            box-shadow: 0 0 50px rgba(243, 156, 18, 0.4);
-            cursor: pointer; transition: transform 0.1s;
-            display: flex; align-items: center; justify-content: center; font-size: 110px;
-            z-index: 10;
+            border: 8px solid #2c2c2e; box-shadow: 0 0 40px rgba(243, 156, 18, 0.4);
+            display: flex; align-items: center; justify-content: center; font-size: 100px;
+            pointer-events: none; /* Чтобы сама монета не мешала клику по зоне */
         }
-        .coin:active { transform: scale(0.92); }
-
-        .floating-text {
-            position: absolute; color: #f1c40f; font-size: 28px; font-weight: bold;
-            pointer-events: none; animation: floatUp 0.8s ease-out forwards;
-            z-index: 20;
+        
+        .click-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%; z-index: 100; cursor: pointer;
         }
-        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-100px); } }
 
-        .stats-card {
-            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);
-            border-radius: 20px; width: 85%; padding: 15px; margin-top: 25px; border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .energy-text { font-size: 14px; margin-bottom: 8px; display: flex; justify-content: space-between; }
-        .energy-bar { background: #111; height: 12px; border-radius: 6px; overflow: hidden; }
-        .energy-fill { background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; transition: width 0.3s; }
-
-        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 85%; margin-top: 15px; }
-        .shop-item {
-            background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 15px;
-            text-align: center; border: 1px solid rgba(243, 156, 18, 0.2); cursor: pointer;
-        }
-        .shop-item:active { background: rgba(243, 156, 18, 0.1); }
-        .shop-item b { color: #f39c12; display: block; font-size: 16px; }
-        .shop-item span { font-size: 11px; color: #888; }
-
-        #ad-btn { margin-top: 20px; color: #f39c12; background: none; border: none; font-size: 13px; cursor: pointer; text-decoration: underline; }
+        .stats { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; width: 85%; margin-top: 20px; }
+        .energy-fill { background: #3498db; height: 10px; border-radius: 5px; transition: width 0.2s; }
+        .shop { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 85%; margin-top: 20px; }
+        .btn { background: #222; border: 1px solid #f39c12; color: white; padding: 10px; border-radius: 10px; text-align: center; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <span id="lvl">Bronze</span>
-        <span id="mt-info">Tap x1</span>
-    </div>
-
-    <div class="balance-container">
-        <div class="balance" id="bal">0</div>
-    </div>
+    <div class="header"><span id="lvl">Bronze</span><span id="mt-info">x1</span></div>
+    <div class="balance" id="bal">0</div>
     
-    <div class="coin-wrapper" id="wrapper">
+    <div class="coin-area">
         <div class="coin" id="coin">🐹</div>
+        <div class="click-layer" id="clicker"></div>
     </div>
 
-    <div class="stats-card">
-        <div class="energy-text">
-            <span>⚡ Энергия</span>
-            <span id="en-info">500 / 500</span>
-        </div>
-        <div class="energy-bar"><div class="energy-fill" id="en-fill" style="width: 100%"></div></div>
+    <div class="stats">
+        <div style="margin-bottom:5px; font-size:12px;">⚡ Энергия: <span id="en-info">500/500</span></div>
+        <div style="background:#111; height:10px; border-radius:5px;"><div class="energy-fill" id="en-fill"></div></div>
     </div>
 
-    <div class="shop-grid">
-        <div class="shop-item" onclick="buyMultitap()">
-            <b>+Урон</b>
-            <span id="cost-mt">150 🪙</span>
-        </div>
-        <div class="shop-item" onclick="buyEnergy()">
-            <b>+Запас</b><span id="cost-en">200 🪙</span>
-        </div>
+    <div class="shop">
+        <div class="btn" onclick="buyMT()"><b>+Урон</b><br><span id="c-mt">150</span></div>
+        <div class="btn" onclick="buyEN()"><b>+Запас</b><br><span id="c-en">200</span></div>
     </div>
-
-    <button id="ad-btn">Смотреть рекламу (Восстановить ⚡)</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let coins = parseInt(localStorage.getItem('coins')) || 0;
-        let multitap = parseInt(localStorage.getItem('multitap')) || 1;
-        let maxEnergy = parseInt(localStorage.getItem('maxEnergy')) || 500;
-        let energy = parseInt(localStorage.getItem('energy')) || maxEnergy;
+        let coins = 0;
+        let multitap = 1;
+        let maxEnergy = 500;
+        let energy = 500;
 
-        // ЗАГРУЗКА ИЗ ОБЛАКА TELEGRAM
-        function loadFromCloud() {
-            const keys = ['coins', 'multitap', 'maxEnergy'];
-            tg.CloudStorage.getItems(keys, (err, values) => {
-                if (!err) {
-                    if (values.coins) coins = parseInt(values.coins);
-                    if (values.multitap) multitap = parseInt(values.multitap);
-                    if (values.maxEnergy) maxEnergy = parseInt(values.maxEnergy);
-                    updateUI(false); // Обновляем без сохранения обратно в облако
-                }
-            });
-        }
-
-        function updateUI(saveToCloud = true) {
-            document.getElementById('bal').innerText = coins.toLocaleString();
-            document.getElementById('en-info').innerText = ${energy} / ${maxEnergy};
-            document.getElementById('en-fill').style.width = (energy/maxEnergy*100) + "%";
-            document.getElementById('mt-info').innerText = "Tap x" + multitap;
-            document.getElementById('cost-mt').innerText = (multitap * 200) + " 🪙";
-            document.getElementById('cost-en').innerText = (maxEnergy) + " 🪙";
-            
-            // Локальное сохранение
-            localStorage.setItem('coins', coins);
-            localStorage.setItem('multitap', multitap);
-            localStorage.setItem('maxEnergy', maxEnergy);
-
-            // Сохранение в облако Telegram
-            if (saveToCloud) {
-                tg.CloudStorage.setItem('coins', coins.toString());
-                tg.CloudStorage.setItem('multitap', multitap.toString());
-                tg.CloudStorage.setItem('maxEnergy', maxEnergy.toString());
-            }
-        }
-
-        function createFloatingText() {
-            const el = document.createElement('div');
-            el.className = 'floating-text';
-            el.innerText = +${multitap};
-            el.style.left = 100px;
-            el.style.top = 50px;
-            document.getElementById('wrapper').appendChild(el);
-            setTimeout(() => el.remove(), 800);
-        }
-
-        function handleTap() {
-            if (energy >= multitap) {
-                coins += multitap;
-                energy -= multitap;
-                createFloatingText();
-                tg.HapticFeedback.impactOccurred('medium');
+        // Загрузка
+        tg.CloudStorage.getItems(['coins', 'mt', 'me'], (err, val) => {
+            if (!err) {
+                coins = parseInt(val.coins) || 0;
+                multitap = parseInt(val.mt) || 1;
+                maxEnergy = parseInt(val.me) || 500;
+                energy = maxEnergy;
                 updateUI();
             }
+        });
+
+        function updateUI() {
+            document.getElementById('bal').innerText = coins.toLocaleString();
+            document.getElementById('en-info').innerText = ${energy}/${maxEnergy};
+            document.getElementById('en-fill').style.width = (energy/maxEnergy*100) + "%";
+            document.getElementById('mt-info').innerText = "x" + multitap;
+            document.getElementById('c-mt').innerText = (multitap * 200);
+            document.getElementById('c-en').innerText = maxEnergy;
         }
 
-        window.buyMultitap = () => {
+        function handleTap(e) {
+            if (energy >= multitap) {coins += multitap;
+                energy -= multitap;
+                
+                // Анимация нажатия
+                const c = document.getElementById('coin');
+                c.style.transform = "scale(0.92)";
+                setTimeout(() => c.style.transform = "scale(1)", 50);
+
+                tg.HapticFeedback.impactOccurred('medium');
+                updateUI();
+                
+                // Сохранение
+                tg.CloudStorage.setItem('coins', coins.toString());
+            }
+        }
+
+        window.buyMT = () => {
             let cost = multitap * 200;
-            if (coins >= cost) { coins -= cost; multitap++; updateUI(); }
+            if (coins >= cost) { 
+                coins -= cost; multitap++; 
+                tg.CloudStorage.setItem('mt', multitap.toString());
+                updateUI(); 
+            }
         }
 
-        window.buyEnergy = () => {
+        window.buyEN = () => {
             let cost = maxEnergy;
-            if (coins >= cost) { coins -= cost; maxEnergy += 250; energy += 250; updateUI(); }
+            if (coins >= cost) { 
+                coins -= cost; maxEnergy += 250; energy += 250; 
+                tg.CloudStorage.setItem('me', maxEnergy.toString());
+                updateUI(); 
+            }
         }
 
-        setInterval(() => { if (energy < maxEnergy) { energy++; updateUI(false); } }, 1000);
+        setInterval(() => { if (energy < maxEnergy) { energy++; updateUI(); } }, 1000);
 
-        document.getElementById('ad-btn').onclick = () => {
-            const AdController = window.Adsgram.init({ blockId: "20870" });
-            AdController.show().then(() => {
-                energy = maxEnergy; updateUI(); tg.showAlert("Энергия полная!");
-            }).catch(() => tg.showAlert("Реклама готовится..."));
-        };
+        // Слушатели событий на прозрачный слой
+        const clicker = document.getElementById('clicker');
+        clicker.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTap();
+        }, {passive: false});
 
-        const coinEl = document.getElementById('coin');
-        coinEl.addEventListener('touchstart', (e) => { e.preventDefault(); handleTap(); });
-        coinEl.addEventListener('mousedown', (e) => { e.preventDefault(); handleTap(); });
+        clicker.addEventListener('mousedown', (e) => {
+            handleTap();
+        });
 
-        loadFromCloud();
-        updateUI(false);
+        updateUI();
     </script>
 </body>
 </html>
