@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Geghtska Elite</title>
+    <title>Geghtska Elite Cloud</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
     <style>
@@ -17,20 +17,22 @@
         .balance-container { text-align: center; margin-bottom: 20px; }
         .balance { font-size: 56px; font-weight: 900; background: linear-gradient(#f1c40f, #e67e22); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .coin-wrapper { position: relative; }
+        .coin-wrapper { position: relative; z-index: 5; }
         .coin {
             width: 240px; height: 240px; border-radius: 50%;
-            background: url('https://i.postimg.cc/mD83WzYf/hamster.png') center/cover; /* Если есть ссылка на фото */
-            background-color: #f39c12; border: 10px solid #2c2c2e;
+            background: radial-gradient(circle, #f1c40f, #d35400); 
+            border: 10px solid #2c2c2e;
             box-shadow: 0 0 50px rgba(243, 156, 18, 0.4);
             cursor: pointer; transition: transform 0.1s;
             display: flex; align-items: center; justify-content: center; font-size: 110px;
+            z-index: 10;
         }
         .coin:active { transform: scale(0.92); }
 
         .floating-text {
             position: absolute; color: #f1c40f; font-size: 28px; font-weight: bold;
             pointer-events: none; animation: floatUp 0.8s ease-out forwards;
+            z-index: 20;
         }
         @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-100px); } }
 
@@ -98,7 +100,20 @@
         let maxEnergy = parseInt(localStorage.getItem('maxEnergy')) || 500;
         let energy = parseInt(localStorage.getItem('energy')) || maxEnergy;
 
-        function updateUI() {
+        // ЗАГРУЗКА ИЗ ОБЛАКА TELEGRAM
+        function loadFromCloud() {
+            const keys = ['coins', 'multitap', 'maxEnergy'];
+            tg.CloudStorage.getItems(keys, (err, values) => {
+                if (!err) {
+                    if (values.coins) coins = parseInt(values.coins);
+                    if (values.multitap) multitap = parseInt(values.multitap);
+                    if (values.maxEnergy) maxEnergy = parseInt(values.maxEnergy);
+                    updateUI(false); // Обновляем без сохранения обратно в облако
+                }
+            });
+        }
+
+        function updateUI(saveToCloud = true) {
             document.getElementById('bal').innerText = coins.toLocaleString();
             document.getElementById('en-info').innerText = ${energy} / ${maxEnergy};
             document.getElementById('en-fill').style.width = (energy/maxEnergy*100) + "%";
@@ -106,30 +121,34 @@
             document.getElementById('cost-mt').innerText = (multitap * 200) + " 🪙";
             document.getElementById('cost-en').innerText = (maxEnergy) + " 🪙";
             
+            // Локальное сохранение
             localStorage.setItem('coins', coins);
             localStorage.setItem('multitap', multitap);
             localStorage.setItem('maxEnergy', maxEnergy);
-            localStorage.setItem('energy', energy);
+
+            // Сохранение в облако Telegram
+            if (saveToCloud) {
+                tg.CloudStorage.setItem('coins', coins.toString());
+                tg.CloudStorage.setItem('multitap', multitap.toString());
+                tg.CloudStorage.setItem('maxEnergy', maxEnergy.toString());
+            }
         }
 
-        function createFloatingText(x, y) {
+        function createFloatingText() {
             const el = document.createElement('div');
             el.className = 'floating-text';
             el.innerText = +${multitap};
-            el.style.left = ${x}px;
-            el.style.top = ${y}px;
+            el.style.left = 100px;
+            el.style.top = 50px;
             document.getElementById('wrapper').appendChild(el);
             setTimeout(() => el.remove(), 800);
         }
 
-        function handleTap(e) {
+        function handleTap() {
             if (energy >= multitap) {
                 coins += multitap;
                 energy -= multitap;
-                
-                const rect = document.getElementById('coin').getBoundingClientRect();
-                createFloatingText(110, 50); // Текст по центру монеты
-                
+                createFloatingText();
                 tg.HapticFeedback.impactOccurred('medium');
                 updateUI();
             }
@@ -145,7 +164,7 @@
             if (coins >= cost) { coins -= cost; maxEnergy += 250; energy += 250; updateUI(); }
         }
 
-        setInterval(() => { if (energy < maxEnergy) { energy++; updateUI(); } }, 1000);
+        setInterval(() => { if (energy < maxEnergy) { energy++; updateUI(false); } }, 1000);
 
         document.getElementById('ad-btn').onclick = () => {
             const AdController = window.Adsgram.init({ blockId: "20870" });
@@ -156,9 +175,10 @@
 
         const coinEl = document.getElementById('coin');
         coinEl.addEventListener('touchstart', (e) => { e.preventDefault(); handleTap(); });
-        coinEl.addEventListener('mousedown', handleTap);
+        coinEl.addEventListener('mousedown', (e) => { e.preventDefault(); handleTap(); });
 
-        updateUI();
+        loadFromCloud();
+        updateUI(false);
     </script>
 </body>
 </html>
