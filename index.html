@@ -1,142 +1,57 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Geghtska Elite Fix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
     <style>
-        body {
-            background: #000; color: white; font-family: sans-serif;
-            margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center;
-            height: 100vh; width: 100vw; overflow: hidden; user-select: none; -webkit-tap-highlight-color: transparent;
+        body { background: #000; color: #fff; text-align: center; font-family: sans-serif; user-select: none; touch-action: manipulation; margin: 0; padding-top: 50px; }
+        #bal { font-size: 60px; font-weight: bold; color: gold; margin-bottom: 20px; }
+        #coin { 
+            width: 250px; height: 250px; background: orange; border-radius: 50%; 
+            display: inline-flex; align-items: center; justify-content: center; 
+            font-size: 100px; cursor: pointer; border: 10px solid #333;
         }
-        .header { width: 90%; display: flex; justify-content: space-between; padding: 20px 0; color: #f39c12; font-weight: bold; }
-        .balance { font-size: 50px; font-weight: 900; margin: 20px 0; color: #f1c40f; }
-        
-        /* Зона клика увеличена */
-        .coin-area {
-            position: relative; width: 280px; height: 280px; 
-            display: flex; align-items: center; justify-content: center;
-        }
-        .coin {
-            width: 240px; height: 240px; border-radius: 50%;
-            background: radial-gradient(circle, #f1c40f, #d35400); 
-            border: 8px solid #2c2c2e; box-shadow: 0 0 40px rgba(243, 156, 18, 0.4);
-            display: flex; align-items: center; justify-content: center; font-size: 100px;
-            pointer-events: none; /* Чтобы сама монета не мешала клику по зоне */
-        }
-        
-        .click-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            border-radius: 50%; z-index: 100; cursor: pointer;
-        }
-
-        .stats { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; width: 85%; margin-top: 20px; }
-        .energy-fill { background: #3498db; height: 10px; border-radius: 5px; transition: width 0.2s; }
-        .shop { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 85%; margin-top: 20px; }
-        .btn { background: #222; border: 1px solid #f39c12; color: white; padding: 10px; border-radius: 10px; text-align: center; }
+        #coin:active { transform: scale(0.95); }
+        .btn-ad { margin-top: 40px; padding: 10px 20px; background: #222; border: 1px solid gold; color: gold; border-radius: 10px; }
     </style>
 </head>
 <body>
-
-    <div class="header"><span id="lvl">Bronze</span><span id="mt-info">x1</span></div>
-    <div class="balance" id="bal">0</div>
-    
-    <div class="coin-area">
-        <div class="coin" id="coin">🐹</div>
-        <div class="click-layer" id="clicker"></div>
-    </div>
-
-    <div class="stats">
-        <div style="margin-bottom:5px; font-size:12px;">⚡ Энергия: <span id="en-info">500/500</span></div>
-        <div style="background:#111; height:10px; border-radius:5px;"><div class="energy-fill" id="en-fill"></div></div>
-    </div>
-
-    <div class="shop">
-        <div class="btn" onclick="buyMT()"><b>+Урон</b><br><span id="c-mt">150</span></div>
-        <div class="btn" onclick="buyEN()"><b>+Запас</b><br><span id="c-en">200</span></div>
-    </div>
+    <div id="bal">0</div>
+    <div id="coin">🐹</div>
+    <br>
+    <button class="btn-ad" id="ad-btn">СМОТРЕТЬ РЕКЛАМУ</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let coins = 0;
-        let multitap = 1;
-        let maxEnergy = 500;
-        let energy = 500;
+        let count = parseInt(localStorage.getItem('coins')) || 0;
+        const balEl = document.getElementById('bal');
+        const coinEl = document.getElementById('coin');
+        
+        balEl.innerText = count;
 
-        // Загрузка
-        tg.CloudStorage.getItems(['coins', 'mt', 'me'], (err, val) => {
-            if (!err) {
-                coins = parseInt(val.coins) || 0;
-                multitap = parseInt(val.mt) || 1;
-                maxEnergy = parseInt(val.me) || 500;
-                energy = maxEnergy;
-                updateUI();
-            }
-        });
-
-        function updateUI() {
-            document.getElementById('bal').innerText = coins.toLocaleString();
-            document.getElementById('en-info').innerText = ${energy}/${maxEnergy};
-            document.getElementById('en-fill').style.width = (energy/maxEnergy*100) + "%";
-            document.getElementById('mt-info').innerText = "x" + multitap;
-            document.getElementById('c-mt').innerText = (multitap * 200);
-            document.getElementById('c-en').innerText = maxEnergy;
+        function doTap() {
+            count++;
+            balEl.innerText = count;
+            localStorage.setItem('coins', count);
+            tg.HapticFeedback.impactOccurred('medium');
         }
 
-        function handleTap(e) {
-            if (energy >= multitap) {coins += multitap;
-                energy -= multitap;
-                
-                // Анимация нажатия
-                const c = document.getElementById('coin');
-                c.style.transform = "scale(0.92)";
-                setTimeout(() => c.style.transform = "scale(1)", 50);
+        // Самый надежный способ обработки клика
+        coinEl.onclick = doTap;
 
-                tg.HapticFeedback.impactOccurred('medium');
-                updateUI();
-                
-                // Сохранение
-                tg.CloudStorage.setItem('coins', coins.toString());
-            }
-        }
-
-        window.buyMT = () => {
-            let cost = multitap * 200;
-            if (coins >= cost) { 
-                coins -= cost; multitap++; 
-                tg.CloudStorage.setItem('mt', multitap.toString());
-                updateUI(); 
-            }
-        }
-
-        window.buyEN = () => {
-            let cost = maxEnergy;
-            if (coins >= cost) { 
-                coins -= cost; maxEnergy += 250; energy += 250; 
-                tg.CloudStorage.setItem('me', maxEnergy.toString());
-                updateUI(); 
-            }
-        }
-
-        setInterval(() => { if (energy < maxEnergy) { energy++; updateUI(); } }, 1000);
-
-        // Слушатели событий на прозрачный слой
-        const clicker = document.getElementById('clicker');
-        clicker.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            handleTap();
-        }, {passive: false});
-
-        clicker.addEventListener('mousedown', (e) => {
-            handleTap();
-        });
-
-        updateUI();
+        // Рекламный блок 20870
+        document.getElementById('ad-btn').onclick = () => {
+            const AdController = window.Adsgram.init({ blockId: "20870" });
+            AdController.show().then(() => {
+                tg.showAlert("Реклама просмотрена!");
+            }).catch(() => {
+                tg.showAlert("Реклама еще загружается...");
+            });
+        };
     </script>
 </body>
 </html>
