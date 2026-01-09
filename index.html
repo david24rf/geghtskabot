@@ -1,4 +1,96 @@
-}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Geghtskabot | TON Clicker</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <style>
+        :root { --gold: #f39c12; --bg: #0b0b0b; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; touch-action: none; overflow: hidden; user-select: none; }
+        
+        #ton-connect { margin-top: 20px; }
+        
+        /* Рівні */
+        .level-wrap { width: 80%; margin-top: 20px; }
+        .level-info { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px; color: #aaa; }
+        .progress-bg { background: #222; height: 10px; border-radius: 5px; border: 1px solid #333; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #f1c40f, #e67e22); height: 100%; width: 0%; transition: width 0.3s; }
+
+        .balance-label { font-size: 50px; font-weight: 900; margin: 25px 0; color: var(--gold); text-shadow: 0 0 15px rgba(243, 156, 18, 0.3); }
+        
+        .main-coin { 
+            width: 220px; height: 220px; background: radial-gradient(circle, #f1c40f, #d35400); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-size: 100px; cursor: pointer; border: 8px solid #2c2c2e;
+            transition: transform 0.05s; box-shadow: 0 0 30px rgba(211, 84, 0, 0.5);
+        }
+        .main-coin:active { transform: scale(0.92); }
+
+        .ad-button { 
+            margin-top: 30px; background: rgba(243, 156, 18, 0.1); border: 2px solid var(--gold); 
+            color: var(--gold); padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer;
+        }
+
+        .footer { margin-top: auto; padding-bottom: 20px; font-size: 11px; color: #444; }
+    </style>
+</head>
+<body>
+
+    <div id="ton-connect"></div>
+
+    <div class="level-wrap">
+        <div class="level-info">
+            <span id="lvl-name">Bronze</span>
+            <span id="lvl-perc">0%</span>
+        </div>
+        <div class="progress-bg"><div class="progress-fill" id="lvl-fill"></div></div>
+    </div>
+
+    <div class="balance-label" id="bal">0</div>
+    
+    <div class="main-coin" id="coin">🐹</div>
+
+    <button class="ad-button" id="ad-btn">📺 ВІДНОВИТИ ЕНЕРГІЮ</button>
+
+    <div class="footer">Geghtskabot v2.0 | TON Ecosystem</div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // TON Connect
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://raw.githubusercontent.com/ton-connect/demo-dapp/main/public/tonconnect-manifest.json',
+            buttonRootId: 'ton-connect'
+        });
+
+        let coins = parseInt(localStorage.getItem('coins')) || 0;
+        const levels = [
+            { n: "Bronze", m: 1000 }, { n: "Silver", m: 10000 }, 
+            { n: "Gold", m: 100000 }, { n: "Legend", m: 1000000 }
+        ];
+
+        function updateUI() {
+            document.getElementById('bal').innerText = coins.toLocaleString();
+            
+            let l = levels.find(x => coins < x.m) || levels[levels.length-1];
+            let prev = levels[levels.indexOf(l)-1]?.m || 0;
+            let prg = ((coins - prev) / (l.m - prev)) * 100;
+            
+            document.getElementById('lvl-name').innerText = l.n;
+            document.getElementById('lvl-fill').style.width = Math.min(prg, 100) + "%";
+            document.getElementById('lvl-perc').innerText = Math.floor(Math.min(prg, 100)) + "%";
+
+            localStorage.setItem('coins', coins);
+        }
+
+        function doTap(e) {
+            coins++;
+            tg.HapticFeedback.impactOccurred('medium');
+            updateUI();}
 
         const coinEl = document.getElementById('coin');
         coinEl.addEventListener('touchstart', (e) => { e.preventDefault(); doTap(e); });
