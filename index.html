@@ -1,73 +1,20 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Geghtskabot | TON Clicker</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://sad.adsgram.ai/js/adsgram-ad-sdk.js"></script>
-    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-    <style>
-        :root { --gold: #f39c12; --bg: #0b0b0b; --card: #1c1c1e; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; touch-action: none; overflow: hidden; }
-        #ton-connect { margin-top: 20px; }
-        .balance-label { font-size: 52px; font-weight: 900; margin: 20px 0; color: var(--gold); }
-        .main-coin { 
-            width: 240px; height: 240px; background: radial-gradient(circle, #f1c40f, #d35400); 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 100px; cursor: pointer; border: 8px solid #2c2c2e; user-select: none;
-            transition: transform 0.05s; box-shadow: 0 0 30px rgba(211, 84, 0, 0.5);
-        }
-        .main-coin:active { transform: scale(0.95); }
-        .ad-button { 
-            margin-top: 30px; background: none; border: 2px solid var(--gold); 
-            color: var(--gold); padding: 12px 25px; border-radius: 25px; font-weight: bold; 
-        }
-        .info-footer { margin-top: auto; padding: 20px; font-size: 12px; color: #555; text-align: center; }
-    </style>
-</head>
-<body>
-    <div id="ton-connect"></div>
-    <div class="balance-label" id="bal">0</div>
-    <div class="main-coin" id="coin">🐹</div>
-    <button class="ad-button" id="ad-btn">📺 REFILL ENERGY (ADS)</button>
-    <div class="info-footer">Geghtskabot Game - Built for TON Blockchain</div>
+}
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-
-        // TON Connect
-        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://raw.githubusercontent.com/ton-connect/demo-dapp/main/public/tonconnect-manifest.json',
-            buttonRootId: 'ton-connect'
-        });
-
-        let coins = parseInt(localStorage.getItem('coins')) || 0;
-        const balEl = document.getElementById('bal');
         const coinEl = document.getElementById('coin');
-        
-        balEl.innerText = coins;
-
-        function doTap(e) {
-            coins++;
-            balEl.innerText = coins;
-            localStorage.setItem('coins', coins);
-            tg.HapticFeedback.impactOccurred('medium');
-        }
-
         coinEl.addEventListener('touchstart', (e) => { e.preventDefault(); doTap(e); });
         coinEl.addEventListener('mousedown', doTap);
 
-        // Реклама (Твій ID: 20859)
+        // Реклама (НОВИЙ ID: 20870)
         document.getElementById('ad-btn').addEventListener('click', () => {
-            const AdController = window.Adsgram.init({ blockId: "20859" });
+            const AdController = window.Adsgram.init({ blockId: "20870" });
             AdController.show().then(() => {
-                tg.showAlert("Дякуємо за перегляд! Енергія відновлена.");
+                tg.showAlert("Енергію відновлено! Продовжуй клікати.");
             }).catch(() => {
-                tg.showAlert("Реклама ще завантажується (статус Created).");
+                tg.showAlert("Реклама завантажується. Спробуй через хвилину.");
             });
         });
+
+        updateUI();
     </script>
 </body>
 </html>
