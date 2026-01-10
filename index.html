@@ -1,55 +1,83 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { background: #000; color: #fff; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; touch-action: none; }
-        .header { display: flex; justify-content: space-between; padding: 15px; color: orange; font-weight: bold; }
-        #bal { font-size: 60px; margin: 20px 0; color: gold; }
+        :root { --primary: #00f2ff; --secondary: #7000ff; --accent: #f1c40f; --bg: #050505; }
+        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; touch-action: none; -webkit-tap-highlight-color: transparent; }
         
-        /* Гігантська кнопка на пів екрана */
-        #coin-zone {
-            width: 280px; height: 280px; background: radial-gradient(circle, #f39c12, #d35400);
-            border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
-            font-size: 100px; border: 10px solid #222; cursor: pointer;
-            -webkit-user-select: none; user-select: none;
-        }
-        #coin-zone:active { transform: scale(0.95); }
+        /* Анімований фон */
+        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 20%, #1e0044 0%, transparent 50%); z-index: -1; }
+        
+        .header { width: 90%; display: flex; justify-content: space-between; padding: 20px; font-weight: bold; color: var(--accent); }
+        .balance { font-size: 60px; font-weight: 900; text-shadow: 0 0 20px rgba(241, 196, 15, 0.5); margin: 10px 0; }
 
-        .stats { background: #111; margin: 20px auto; width: 80%; padding: 15px; border-radius: 15px; border: 1px solid #333; }
-        .bar-bg { background: #222; height: 10px; border-radius: 5px; margin-top: 5px; }
-        #bar-fill { background: cyan; height: 100%; width: 100%; border-radius: 5px; transition: 0.2s; }
+        /* Кнопка-монета */
+        .coin-wrapper { position: relative; width: 250px; height: 250px; margin-top: 10px; }
+        .main-button {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: linear-gradient(145deg, #1a1a1a, #000);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 1), inset 0 0 20px rgba(112, 0, 255, 0.3);
+            border: 4px solid #222; transition: transform 0.05s;
+        }
+        .coin-emoji { font-size: 110px; z-index: 1; }
         
-        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #111; }
-        .nav button { flex: 1; padding: 15px; background: none; border: none; color: #888; font-weight: bold; }
-        .nav button.active { color: orange; border-top: 2px solid orange; }
-        .page { display: none; padding-bottom: 80px; }
+        /* Прозорий сенсор для 100% кліків */
+        #click-sensor { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 100; cursor: pointer; }
+
+        /* Панель енергії */
+        .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: 20px; width: 85%; padding: 15px; margin-top: 20px; border: 1px solid rgba(255, 255, 255, 0.1); }
+        .energy-bar { background: #111; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; border: 1px solid #333; }
+        .energy-fill { background: linear-gradient(90deg, var(--primary), var(--secondary)); height: 100%; width: 100%; transition: width 0.2s; }
+
+        /* Меню */
+        .nav { position: fixed; bottom: 20px; display: flex; width: 92%; gap: 10px; }
+        .tab-btn { flex: 1; padding: 15px; border-radius: 15px; border: 1px solid #333; background: #111; color: #888; font-weight: bold; cursor: pointer; }
+        .tab-btn.active { background: var(--secondary); color: white; border-color: var(--primary); }
+
+        .page { display: none; width: 100%; text-align: center; }
         .page.active { display: block; }
+
+        /* Магазин */
+        .item { background: rgba(255,255,255,0.05); margin: 10px 20px; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        .buy-btn { background: var(--primary); color: #000; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
+    <div class="bg-glow"></div>
+    <div class="header"><span>LVL: BRONZE</span><span id="tap-val">X1</span></div>
 
-    <div class="header"><span>BRONZE</span><span id="mt-txt">x1</span></div>
-
-    <div id="p-game" class="page active">
-        <div id="bal">0</div>
-        <div id="coin-zone">🐹</div>
-        <div class="stats">
-            <div style="font-size: 12px">⚡ ЕНЕРГІЯ: <span id="en-txt">500</span></div>
-            <div class="bar-bg"><div id="bar-fill"></div></div>
+    <div id="game-page" class="page active">
+        <div class="balance" id="bal">0</div>
+        <div style="display: flex; justify-content: center;">
+            <div class="coin-wrapper">
+                <div class="main-button" id="coin-visual"><span class="coin-emoji">🐹</span></div>
+                <div id="click-sensor"></div>
+            </div>
+        </div>
+        <div class="glass-panel">
+            <div style="display:flex; justify-content:space-between; font-size:12px;"><span>⚡ ЕНЕРГІЯ</span><span id="en-text">500/500</span></div>
+            <div class="energy-bar"><div class="energy-fill" id="en-fill"></div></div>
         </div>
     </div>
 
-    <div id="p-shop" class="page">
-        <h2>МАГАЗИН</h2>
-        <button onclick="buyMT()" style="padding: 20px; width: 80%; background: orange; border-radius: 10px; border: none; font-weight: bold;">+1 ДО КЛІКУ (200 монет)</button>
+    <div id="shop-page" class="page"><h2 style="color: var(--primary);">МАГАЗИН</h2>
+        <div class="item"><div><b>Мультітап</b><br><small id="c-mt">200 монет</small></div><button class="buy-btn" onclick="buyMT()">КУПИТИ</button></div>
+        <div class="item"><div><b>Енергія</b><br><small id="c-en">500 монет</small></div><button class="buy-btn" onclick="buyEN()">КУПИТИ</button></div>
+    </div>
+
+    <div id="task-page" class="page">
+        <h2 style="color: var(--accent);">КВЕСТИ</h2>
+        <div class="item"><div><b>Підписка</b><br><small>+50,000 монет</small></div><button class="buy-btn" onclick="openTask('ТВОЯ_СИЛКА')">ЙТИ</button></div>
     </div>
 
     <div class="nav">
-        <button id="b-game" class="active" onclick="go('game')">ГРА</button>
-        <button id="b-shop" onclick="go('shop')">ШОП</button>
+        <button class="tab-btn active" onclick="go('game', this)">ГРА</button>
+        <button class="tab-btn" onclick="go('shop', this)">ШОП</button>
+        <button class="tab-btn" onclick="go('task', this)">КВЕСТИ</button>
     </div>
 
     <script>
@@ -58,52 +86,48 @@
 
         let coins = parseInt(localStorage.getItem('c')) || 0;
         let mt = parseInt(localStorage.getItem('m')) || 1;
-        let en = 500;
-        let maxEn = 500;
+        let me = parseInt(localStorage.getItem('me')) || 500;
+        let en = me;
 
         function upd() {
             document.getElementById('bal').innerText = coins.toLocaleString();
-            document.getElementById('en-txt').innerText = en;
-            document.getElementById('bar-fill').style.width = (en/maxEn*100) + "%";
-            document.getElementById('mt-txt').innerText = "x" + mt;
+            document.getElementById('en-text').innerText = ${Math.floor(en)} / ${me};
+            document.getElementById('en-fill').style.width = (en/me*100) + "%";
+            document.getElementById('tap-val').innerText = "X" + mt;
+            document.getElementById('c-mt').innerText = (mt * 300) + " монет";
+            document.getElementById('c-en').innerText = me + " монет";
             localStorage.setItem('c', coins);
             localStorage.setItem('m', mt);
+            localStorage.setItem('me', me);
         }
 
-        // ОСНОВНА ФУНКЦІЯ КЛІКУ
         function tap() {
             if (en >= mt) {
-                coins += mt;
-                en -= mt;
+                coins += mt; en -= mt;
+                const v = document.getElementById('coin-visual');
+                v.style.transform = "scale(0.95)";
+                setTimeout(() => v.style.transform = "scale(1)", 50);
                 tg.HapticFeedback.impactOccurred('light');
                 upd();
             }
         }
 
-        function go(p) {
+        function go(p, b) {
             document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-            document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active'));
-            document.getElementById('p-' + p).classList.add('active');
-            document.getElementById('b-' + p).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(x => x.classList.remove('active'));
+            document.getElementById(p + '-page').classList.add('active');
+            b.classList.add('active');
         }
 
-        window.buyMT = () => {
-            if (coins >= 200) { coins -= 200; mt++; upd(); }
-        }
+        window.buyMT = () => { if(coins >= mt*300){ coins -= mt*300; mt++; upd(); } };
+        window.buyEN = () => { if(coins >= me){ coins -= me; me += 200; en = me; upd(); } };
+        window.openTask = (u) => { tg.openTelegramLink(u); };
 
-        // Обробка натискання на зону монети
-        const zone = document.getElementById('coin-zone');
-        zone.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            tap();
-        });
-        zone.onclick = tap;
+        const s = document.getElementById('click-sensor');
+        s.addEventListener('touchstart', (e) => { e.preventDefault(); tap(); }, {passive: false});
+        s.onclick = tap;
 
-        // Реген енергії: +1 кожну секунду
-        setInterval(() => {
-            if (en < maxEn) { en++; upd(); }
-        }, 1000);
-
+        setInterval(() => { if(en < me){ en++; upd(); } }, 1000);
         upd();
     </script>
 </body>
