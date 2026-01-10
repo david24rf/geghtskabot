@@ -1,128 +1,110 @@
 <!DOCTYPE html>
-<html lang="uk">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Geghtska Elite Crypto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --primary: #00f2ff; --secondary: #7000ff; --accent: #f1c40f; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; user-select: none; touch-action: none; -webkit-tap-highlight-color: transparent; }
-        .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 50% 20%, #1e0044 0%, transparent 50%); z-index: -1; }
-        .header { width: 90%; display: flex; justify-content: space-between; padding: 20px; font-weight: bold; color: var(--accent); }
-        .balance-box { text-align: center; margin-top: 10px; }
-        .balance { font-size: 64px; font-weight: 900; color: var(--accent); }
+        body { background: #000; color: #fff; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; touch-action: none; }
+        .header { display: flex; justify-content: space-between; padding: 15px; color: orange; font-weight: bold; }
+        #bal { font-size: 60px; margin: 20px 0; color: gold; }
         
-        /* Контейнер монети */
-        .coin-wrapper { position: relative; width: 260px; height: 260px; margin-top: 20px; }
-        .main-button {
-            width: 100%; height: 100%; border-radius: 50%;
-            background: linear-gradient(145deg, #1a1a1a, #000);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 1), inset 0 0 20px rgba(112, 0, 255, 0.3);
-            border: 4px solid #222; transition: transform 0.05s;
+        /* Гігантська кнопка на пів екрана */
+        #coin-zone {
+            width: 280px; height: 280px; background: radial-gradient(circle, #f39c12, #d35400);
+            border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 100px; border: 10px solid #222; cursor: pointer;
+            -webkit-user-select: none; user-select: none;
         }
-        .coin-emoji { font-size: 110px; z-index: 1; }
-        
-        /* Прозорий шар для кліків (ВИПРАВЛЕННЯ) */
-        .click-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; z-index: 100; cursor: pointer; }
+        #coin-zone:active { transform: scale(0.95); }
 
-        .glass-panel { background: rgba(255, 255, 255, 0.03); border-radius: 20px; width: 85%; padding: 15px; margin-top: 25px; border: 1px solid rgba(255, 255, 255, 0.1); }
-        .energy-bar { background: #111; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 10px; }
-        .energy-fill { background: linear-gradient(90deg, var(--primary), var(--secondary)); height: 100%; width: 100%; transition: width 0.2s; }
+        .stats { background: #111; margin: 20px auto; width: 80%; padding: 15px; border-radius: 15px; border: 1px solid #333; }
+        .bar-bg { background: #222; height: 10px; border-radius: 5px; margin-top: 5px; }
+        #bar-fill { background: cyan; height: 100%; width: 100%; border-radius: 5px; transition: 0.2s; }
         
-        .tabs { position: fixed; bottom: 20px; display: flex; width: 90%; gap: 10px; }
-        .tab-btn { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #333; background: #111; color: #fff; font-weight: bold; }
-        .tab-btn.active { background: var(--secondary); border-color: var(--primary); }
-        .content-tab { display: none; width: 100%; text-align: center; }
-        .content-tab.active { display: block; }
-        .list-item { background: rgba(255,255,255,0.05); margin: 10px 20px; padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #111; }
+        .nav button { flex: 1; padding: 15px; background: none; border: none; color: #888; font-weight: bold; }
+        .nav button.active { color: orange; border-top: 2px solid orange; }
+        .page { display: none; padding-bottom: 80px; }
+        .page.active { display: block; }
     </style>
 </head>
 <body>
-    <div class="bg-glow"></div>
-    <div class="header"><span>LVL: BRONZE</span><span id="tap-val">TAP X1</span></div>
 
-    <div id="game-tab" class="content-tab active">
-        <div class="balance-box"><div class="balance" id="bal">0</div></div>
-        <div style="display: flex; justify-content: center;">
-            <div class="coin-wrapper">
-                <div class="main-button" id="coin-visual"><span class="coin-emoji">🐹</span></div>
-                <div class="click-layer" id="click-sensor"></div>
-            </div>
-        </div>
-        <div class="glass-panel">
-            <div style="display:flex; justify-content:space-between; font-size:12px;"><span>⚡ Енергія</span><span id="en-text">500 / 500</span></div>
-            <div class="energy-bar"><div class="energy-fill" id="en-fill"></div></div>
+    <div class="header"><span>BRONZE</span><span id="mt-txt">x1</span></div>
+
+    <div id="p-game" class="page active">
+        <div id="bal">0</div>
+        <div id="coin-zone">🐹</div>
+        <div class="stats">
+            <div style="font-size: 12px">⚡ ЕНЕРГІЯ: <span id="en-txt">500</span></div>
+            <div class="bar-bg"><div id="bar-fill"></div></div>
         </div>
     </div>
 
-    <div id="shop-tab" class="content-tab">
-        <h2>Магазин</h2>
-        <div class="list-item"><div><b>Мультітап</b><br><small id="cost-mt">200</small></div><button onclick="buyMT()">Купити</button></div><div class="list-item"><div><b>Енергія</b><br><small id="cost-en">250</small></div><button onclick="buyEN()">Купити</button></div>
+    <div id="p-shop" class="page">
+        <h2>МАГАЗИН</h2>
+        <button onclick="buyMT()" style="padding: 20px; width: 80%; background: orange; border-radius: 10px; border: none; font-weight: bold;">+1 ДО КЛІКУ (200 монет)</button>
     </div>
 
-    <div id="tasks-tab" class="content-tab">
-        <h2>Завдання</h2>
-        <div class="list-item"><div><b>Мій Канал</b><br><small>+50k монет</small></div><button onclick="openTask('ТВОЯ_СИЛКА')">Виконати</button></div>
-    </div>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('game', this)">Гра</button>
-        <button class="tab-btn" onclick="showTab('shop', this)">Шоп</button>
-        <button class="tab-btn" onclick="showTab('tasks', this)">Квести</button>
+    <div class="nav">
+        <button id="b-game" class="active" onclick="go('game')">ГРА</button>
+        <button id="b-shop" onclick="go('shop')">ШОП</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        let coins = parseInt(localStorage.getItem('coins')) || 0;
-        let mt = parseInt(localStorage.getItem('mt')) || 1;
-        let me = parseInt(localStorage.getItem('me')) || 500;
-        let energy = me;
+        let coins = parseInt(localStorage.getItem('c')) || 0;
+        let mt = parseInt(localStorage.getItem('m')) || 1;
+        let en = 500;
+        let maxEn = 500;
 
-        function updateUI() {
+        function upd() {
             document.getElementById('bal').innerText = coins.toLocaleString();
-            document.getElementById('en-text').innerText = ${Math.floor(energy)} / ${me};
-            document.getElementById('en-fill').style.width = (energy/me*100) + "%";
-            document.getElementById('tap-val').innerText = "TAP X" + mt;
-            document.getElementById('cost-mt').innerText = (mt * 300) + " монет";
-            document.getElementById('cost-en').innerText = me + " монет";
-            localStorage.setItem('coins', coins);
-            localStorage.setItem('mt', mt);
-            localStorage.setItem('me', me);
+            document.getElementById('en-txt').innerText = en;
+            document.getElementById('bar-fill').style.width = (en/maxEn*100) + "%";
+            document.getElementById('mt-txt').innerText = "x" + mt;
+            localStorage.setItem('c', coins);
+            localStorage.setItem('m', mt);
         }
 
-        function handleTap(e) {
-            if (energy >= mt) {
-                coins += mt; energy -= mt;
-                const visual = document.getElementById('coin-visual');
-                visual.style.transform = "scale(0.95)";
-                setTimeout(() => visual.style.transform = "scale(1)", 50);
-                tg.HapticFeedback.impactOccurred('medium');
-                updateUI();
+        // ОСНОВНА ФУНКЦІЯ КЛІКУ
+        function tap() {
+            if (en >= mt) {
+                coins += mt;
+                en -= mt;
+                tg.HapticFeedback.impactOccurred('light');
+                upd();
             }
         }
 
-        function showTab(id, btn) {
-            document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id + '-tab').classList.add('active');
-            btn.classList.add('active');
+        function go(p) {
+            document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active'));
+            document.getElementById('p-' + p).classList.add('active');
+            document.getElementById('b-' + p).classList.add('active');
         }
 
-        window.buyMT = () => { if (coins >= (mt * 300)) { coins -= (mt * 300); mt++; updateUI(); } };
-        window.buyEN = () => { if (coins >= me) { coins -= me; me += 200; energy = me; updateUI(); } };
-        window.openTask = (url) => { tg.openTelegramLink(url); };
+        window.buyMT = () => {
+            if (coins >= 200) { coins -= 200; mt++; upd(); }
+        }
 
-        setInterval(() => { if (energy < me) { energy++; updateUI(); } }, 1000);
+        // Обробка натискання на зону монети
+        const zone = document.getElementById('coin-zone');
+        zone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            tap();
+        });
+        zone.onclick = tap;
 
-        const sensor = document.getElementById('click-sensor');
-        sensor.addEventListener('touchstart', (e) => { e.preventDefault(); handleTap(); }, {passive: false});
-        sensor.addEventListener('mousedown', handleTap);
+        // Реген енергії: +1 кожну секунду
+        setInterval(() => {
+            if (en < maxEn) { en++; upd(); }
+        }, 1000);
 
-        updateUI();
+        upd();
     </script>
 </body>
 </html>
